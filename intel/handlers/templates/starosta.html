@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Панель старосты - Управление дипломными работами</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+        <link rel="stylesheet" href="/static/css/starosta.css">
+
+
+</head>
+<body>
+    <!-- Анимированный фон с частицами -->
+    <div class="particles-container" id="particlesContainer"></div>
+
+    <!-- Контейнер приложения -->
+    <div class="app-container">
+        <!-- Боковая панель -->
+        <div class="sidebar">
+            <div class="logo">
+                <div class="logo-icon">
+                    <i class="fas fa-user-graduate"></i>
+                </div>
+                <div class="logo-text">Панель старосты</div>
+            </div>
+            
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a href="#" class="nav-link active">
+                        <i class="fas fa-home nav-icon"></i>
+                        <span>Главная</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/students/" class="nav-link">
+                        <i class="fas fa-users nav-icon"></i>
+                        <span>Студенты группы</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link">
+                        <i class="fas fa-book nav-icon"></i>
+                        <span>Доступные темы</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link">
+                        <i class="fas fa-chalkboard-teacher nav-icon"></i>
+                        <span>Руководители</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link">
+                        <i class="fas fa-tasks nav-icon"></i>
+                        <span>Мои назначения</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link">
+                        <i class="fas fa-cog nav-icon"></i>
+                        <span>Настройки</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Основной контент -->
+        <div class="main-content">
+            <div class="header">
+                <h1 class="page-title">Панель управления группой</h1>
+                <div class="user-info">
+                    <div class="user-avatar">СТ</div>
+                </div>
+            </div>
+
+            <!-- Карточки статистики -->
+            <div class="stats-container">
+                <div class="stat-card">
+                    <div class="stat-value" id="totalStudents">0</div>
+                    <div class="stat-label">Студентов в группе</div>
+                    <div class="stat-icon"><i class="fas fa-users"></i></div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="assignedTopics">0</div>
+                    <div class="stat-label">Темы назначены</div>
+                    <div class="stat-icon"><i class="fas fa-book"></i></div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="freeTopics">0</div>
+                    <div class="stat-label">Свободные темы</div>
+                    <div class="stat-icon"><i class="fas fa-tag"></i></div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="availableSupervisors">0</div>
+                    <div class="stat-label">Доступные руководители</div>
+                    <div class="stat-icon"><i class="fas fa-chalkboard-teacher"></i></div>
+                </div>
+            </div>
+
+            <!-- Панель управления -->
+            <div class="control-panel">
+                <h2 class="panel-title"><i class="fas fa-tasks"></i> Быстрые действия</h2>
+                
+                <div class="action-buttons">
+                    <button class="btn btn-primary" id="viewTopicsBtn">
+                        <i class="fas fa-search"></i> Просмотреть все темы
+                    </button>
+                    <button class="btn btn-primary" id="viewStudentsBtn">
+                        <i class="fas fa-users"></i> Список студентов группы
+                    </button>
+                    <button class="btn btn-secondary" id="myAssignmentsBtn">
+                        <i class="fas fa-clipboard-list"></i> Мои назначения
+                    </button>
+                    <button class="btn btn-secondary" id="viewSupervisorsBtn">
+                        <i class="fas fa-user-tie"></i> Просмотреть руководителей
+                    </button>
+                </div>
+            </div>
+
+            <!-- Таблица студентов -->
+            <div class="table-container">
+                <div class="table-header">
+                    <h2 class="table-title">Список студентов группы</h2>
+                    <div class="search-box">
+                        <i class="fas fa-search search-icon"></i>
+                        <input type="text" class="search-input" id="studentSearch" placeholder="Поиск студента...">
+                    </div>
+                </div>
+                
+                <table id="studentsTable">
+                    <thead>
+                        <tr>
+                            <th>ФИО</th>
+                            <th>Тема работы</th>
+                            <th>Руководитель</th>
+                            <th>Статус</th>
+                            <th>Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody id="studentsTableBody">
+                        <!-- Данные будут загружены с сервера -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Таблица тем -->
+            <div class="table-container">
+                <div class="table-header">
+                    <h2 class="table-title">Доступные темы работ</h2>
+                    <div class="search-box">
+                        <i class="fas fa-search search-icon"></i>
+                        <input type="text" class="search-input" id="topicSearch" placeholder="Поиск темы...">
+                    </div>
+                </div>
+                
+                <table id="topicsTable">
+                    <thead>
+                        <tr>
+                            <th>Название темы</th>
+                            <th>Предмет</th>
+                            <th>Тип работы</th>
+                            <th>Статус</th>
+                            <th>Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody id="topicsTableBody">
+                        <!-- Данные будут загружены с сервера -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно назначения темы -->
+    <div class="modal" id="assignTopicModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Назначение темы работы</h2>
+                <button class="close-btn" id="closeAssignModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="assignTopicForm">
+                    <input type="hidden" id="assignTopicId">
+                    <div class="form-group">
+                        <label class="form-label">Выберите студента</label>
+                        <select class="form-select" id="assignStudent" required>
+                            <option value="">-- Выберите студента --</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Выберите руководителя</label>
+                        <select class="form-select" id="assignSupervisor" required>
+                            <option value="">-- Выберите руководителя --</option>
+                        </select>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" id="cancelAssignBtn">Отмена</button>
+                        <button type="submit" class="btn btn-primary">Назначить тему</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/starosta.js"> </script>
+</body>
+</html>

@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Вход в систему | Колледж</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/static/css/Login.css">
+
+</head>
+<body>
+    <!-- Геометрический фон -->
+    <div class="geometric-bg">
+        <div class="shape shape-1"></div>
+        <div class="shape shape-2"></div>
+        <div class="shape shape-3"></div>
+    </div>
+    
+    <div class="login-container">
+        <!-- Левая панель с информацией -->
+        <div class="info-panel">
+            <div class="logo">TECH COLLEGE</div>
+            <div class="subtitle">Инновационная образовательная платформа</div>
+            
+            <ul class="features">
+                <li><i class="fas fa-graduation-cap"></i> Доступ к учебным материалам</li>
+                <li><i class="fas fa-calendar-alt"></i> Расписание занятий онлайн</li>
+                <li><i class="fas fa-chart-line"></i> Отслеживание успеваемости</li>
+                <li><i class="fas fa-users"></i> Виртуальные классы и обсуждения</li>
+            </ul>
+        </div>
+        
+        <!-- Правая панель с формой -->
+        <div class="form-panel">
+            <div class="form-header">
+                <h2 class="form-title">Вход в систему</h2>
+                <p class="form-subtitle">Введите свои учетные данные для доступа</p>
+            </div>
+            
+            <form id="loginForm" method="POST">
+                <div class="form-group">
+                    <label for="email">Электронная почта</label>
+                    <div class="input-wrapper">
+                        <input type="email" id="email" name="email" required placeholder="student@college.edu">
+                        <div class="input-icon"><i class="fas fa-envelope"></i></div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">Пароль</label>
+                    <div class="input-wrapper">
+                        <input type="password" id="password" name="password" required placeholder="Введите ваш пароль">
+                        <div class="input-icon"><i class="fas fa-lock"></i></div>
+                    </div>
+                </div>
+                
+                <div class="remember-forgot">
+                    <div class="remember">
+                        <input type="checkbox" id="remember" name="remember">
+                        <label for="remember">Запомнить меня</label>
+                    </div>
+                    <a href="#" class="forgot-password">Забыли пароль?</a>
+                </div>
+                
+                <button type="submit" class="btn">Войти в систему</button>
+                
+                <div class="divider">или войдите с помощью</div>
+                
+                <div class="social-login">
+                    <a href="#" class="social-btn"><i class="fab fa-google"></i></a>
+                    <a href="#" class="social-btn"><i class="fab fa-microsoft"></i></a>
+                    <a href="#" class="social-btn"><i class="fab fa-apple"></i></a>
+                </div>
+                
+                <div class="register-link">
+                    Нет учетной записи? <a href="/register/">Зарегистрироваться</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Анимация входа при загрузке
+        document.addEventListener('DOMContentLoaded', function() {
+            const loginContainer = document.querySelector('.login-container');
+            loginContainer.style.opacity = '0';
+            loginContainer.style.transform = 'translateY(20px)';
+            
+            setTimeout(() => {
+                loginContainer.style.transition = 'opacity 0.8s ease, transform 0.8s ease';
+                loginContainer.style.opacity = '1';
+                loginContainer.style.transform = 'translateY(0)';
+            }, 300);
+        
+            setTimeout(() => {
+                btn.textContent = originalText;
+                btn.disabled = false;
+                
+                // Эффект успешного входа
+                const loginContainer = document.querySelector('.login-container');
+                loginContainer.style.transition = 'transform 0.5s ease, opacity 0.5s ease';
+                loginContainer.style.transform = 'scale(1.05)';
+                loginContainer.style.opacity = '0.9';
+                
+            }, 2000);
+        });
+
+            
+            
+
+
+        // Эффект при фокусе на полях ввода
+        const inputs = document.querySelectorAll('input');
+        inputs.forEach(input => {
+            input.addEventListener('focus', function() {
+                this.parentElement.parentElement.style.transform = 'translateX(5px)';
+            });
+            
+            input.addEventListener('blur', function() {
+                this.parentElement.parentElement.style.transform = 'translateX(0)';
+            });
+        });
+    </script>
+</body>
+</html>
