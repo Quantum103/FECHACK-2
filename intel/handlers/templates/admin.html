@@ -35,7 +35,7 @@
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a href="/students/" class="nav-link" data-page="students">
+                    <a href="/students" class="nav-link" data-page="students">
                         <i class="fas fa-users nav-icon"></i>
                         <span>Студенты</span>
                     </a>
@@ -236,17 +236,7 @@
 document.addEventListener('DOMContentLoaded', function() {
     console.log('DOM loaded');
     
-    // Навигация
-    const navLinks = document.querySelectorAll('.nav-link');
-    navLinks.forEach(link => {
-        link.addEventListener('click', function(e) {
-            e.preventDefault();
-            navLinks.forEach(l => l.classList.remove('active'));
-            this.classList.add('active');
-            document.querySelector('.page-title').textContent = this.querySelector('span').textContent;
-        });
-    });
-    
+
     // Загрузка файла
     const fileInput = document.getElementById('fileInput');
     const uploadArea = document.getElementById('uploadArea');
@@ -310,6 +300,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 body: formData
             });
             
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
             const result = await response.json();
             
             if (result.success) {
@@ -353,7 +347,29 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function downloadTemplate() {
-        alert('Функция скачивания шаблона в разработке');
+        // Спросим пользователя, какой шаблон он хочет скачать
+        const templateType = prompt('Какой шаблон скачать?\nВведите "1" для шаблона студентов\nВведите "2" для шаблона тем');
+        
+        let filename, url;
+        
+        if (templateType === '1') {
+            filename = 'template_students.xlsx';
+            url = '/static/templates/template_students.xlsx';
+        } else if (templateType === '2') {
+            filename = 'template_topics.xlsx';
+            url = '/static/templates/template_topics.xlsx';
+        } else {
+            alert('Неверный выбор');
+            return;
+        }
+        
+        // Создаем временную ссылку для скачивания
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     }
     
     // Модальное окно

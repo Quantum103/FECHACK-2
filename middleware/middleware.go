@@ -26,6 +26,7 @@
 package middleware
 
 import (
+	"log"
 	"net/http"
 	"proj/utils"
 )
@@ -89,6 +90,18 @@ func HeadmanOrAbove(next http.HandlerFunc) http.HandlerFunc {
 			http.Error(w, "Доступ запрещен. Требуются права старосты или выше.", http.StatusForbidden)
 			return
 		}
+		next(w, r)
+	}
+}
+
+func RecoveryMiddleware(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		defer func() {
+			if err := recover(); err != nil {
+				log.Printf("PANIC: %v", err)
+				http.Error(w, "Внутренняя ошибка сервера", http.StatusInternalServerError)
+			}
+		}()
 		next(w, r)
 	}
 }

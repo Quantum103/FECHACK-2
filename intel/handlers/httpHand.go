@@ -29,10 +29,12 @@ func RegisterRouter() {
 	http.HandleFunc("/login/", login)
 	http.HandleFunc("/logout/", logout)
 
+	http.HandleFunc("/assign-topic", AssignTopicToStudent)
+	http.HandleFunc("/assign-student", AssignStudentToTopic)
 	// ──────  защищённые  ──────
 	http.Handle("/dashboard/", middleware.CheckAuth(Dashboard))
 	http.Handle("/", middleware.CheckAuth(Dashboard)) // главная = админ‑панель
-	http.Handle("/students/", middleware.CheckAuth(ListStudents))
+	http.Handle("/students", middleware.RecoveryMiddleware(ListStudents))
 	http.Handle("/ruc/", middleware.CheckAuth(ruc))
 	http.Handle("/starosta/", middleware.CheckAuth(starosta))
 	http.Handle("/upload", http.HandlerFunc(AdminFunction))

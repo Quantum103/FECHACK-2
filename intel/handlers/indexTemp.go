@@ -96,12 +96,31 @@ func AdminFunction(w http.ResponseWriter, r *http.Request) {
 }
 
 func ListStudents(w http.ResponseWriter, r *http.Request) {
+	// Проверяем авторизацию
 	_, err := utils.GetUserFromCookie(r)
 	if err != nil {
 		http.Redirect(w, r, "/login", http.StatusFound)
 		return
 	}
-	templates.ExecuteTemplate(w, "listStudents.html", nil)
+
+	// Получаем реальные данные из базы
+	data, err := GetAllTopicsData()
+	if err != nil {
+		log.Printf("Ошибка получения данных: %v", err)
+		http.Error(w, "Ошибка загрузки данных: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Добавляем заголовок для страницы
+	data["Title"] = "Управление студентами и темами"
+
+	// Выполн+яем шаблон
+	err = templates.ExecuteTemplate(w, "listStudents.html", data)
+	if err != nil {
+		log.Printf("Ошибка выполнения шаблона: %v", err)
+		http.Error(w, "Ошибка отображения страницы", http.StatusInternalServerError)
+		return
+	}
 }
 
 func ruc(w http.ResponseWriter, r *http.Request) {
@@ -158,227 +177,3 @@ func starosta(w http.ResponseWriter, r *http.Request) {
 	templates.ExecuteTemplate(w, "starosta.html", nil)
 
 }
-
-// func HeadmanFunction(w http.ResponseWriter, r *http.Request) {
-// 	_, err := utils.GetUserFromCookie(r)
-// 	if err != nil {
-// 		http.Redirect(w, r, "/login", http.StatusFound)
-// 		return
-// 	}
-
-// 	db := services.GetDB()
-// 	users, err := GetUsersByGroup(db, "ИС-202")
-// 	if err != nil {
-// 		http.Error(w, "Ошибка получения пользователей", http.StatusInternalServerError)
-// 		return
-// 	}
-
-// 	// Форматируем сегодняшнюю дату
-// 	today := time.Now().Format("02.01.2006")
-
-// 	data := TemplateData{
-// 		Users: users,
-// 		Date:  today,
-// 	}
-
-// 	templates.ExecuteTemplate(w, "listUsers.html", data)
-// }
-
-// func StudentFunction(w http.ResponseWriter, r *http.Request) {
-// 	claims, err := utils.GetUserFromCookie(r)
-// 	if err != nil {
-// 		http.Redirect(w, r, "/login", http.StatusFound)
-// 		return
-// 	}
-
-// 	// Получаем информацию о студенте
-// 	db := services.GetDB()
-// 	var student models.User
-// 	if err := db.Where("email = ?", claims.Email).First(&student).Error; err != nil {
-// 		http.Error(w, "Студент не найден", http.StatusInternalServerError)
-// 		return
-// 	}
-
-// 	// Получаем посещаемость за сегодня
-// 	today := time.Now().Format("2006-01-02")
-// 	var attendance models.Attendance
-// 	result := db.Where("user_id = ? AND DATE(date) = ?", student.ID, today).First(&attendance)
-
-// 	// Подготавливаем данные для шаблона
-// 	data := struct {
-// 		Student     models.User
-// 		Attendance  *models.Attendance
-// 		HasRecord   bool
-// 		Date        string
-// 		Status      string
-// 		StatusClass string
-// 	}{
-// 		Student:   student,
-// 		Date:      time.Now().Format("02.01.2006"),
-// 		HasRecord: result.Error == nil,
-// 	}
-
-// 	if data.HasRecord {
-// 		data.Attendance = &attendance
-// 		if attendance.HoursMissed == 0 {
-// 			data.Status = "Присутствовал"
-// 			data.StatusClass = "present"
-// 		} else {
-// 			data.Status = "Отсутствовал"
-// 			data.StatusClass = "absent"
-// 		}
-// 	} else {
-// 		data.Status = "Не отмечен"
-// 		data.StatusClass = "unknown"
-// 	}
-
-// 	templates.ExecuteTemplate(w, "student_dashboard.html", data)
-// }
-
-// func CuratorFunction(w http.ResponseWriter, r *http.Request) {
-// 	claims, err := utils.GetUserFromCookie(r)
-// 	if err != nil {
-// 		http.Redirect(w, r, "/login", http.StatusFound)
-// 		return
-// 	}
-
-// 	db := services.GetDB()
-
-// 	// Получаем текущего куратора по email из куки (так как Name нет в Claims)
-// 	var curator models.User
-// 	if err := db.Where("email = ?", claims.Email).First(&curator).Error; err != nil {
-// 		http.Error(w, "Куратор не найден", http.StatusInternalServerError)
-// 		return
-// 	}
-
-// 	// Обработка добавления новой группы
-// 	if r.Method == http.MethodPost {
-// 		groupName := r.FormValue("group")
-
-// 		if groupName != "" {
-// 			// Проверяем, нет ли уже такой группы у этого куратора
-// 			var existingGroup models.Groupfromcur
-// 			result := db.Where("name = ? AND group = ?", curator.Name, groupName).First(&existingGroup)
-
-// 			if result.Error != nil {
-// 				// Если группы нет - создаем
-// 				curatorGroup := &models.Groupfromcur{
-// 					Name:  curator.Name, // Используем ФИО из БД
-// 					Group: groupName,
-// 				}
-// 				services.Add(curatorGroup)
-
-// 			}
-// 		}
-// 		http.Redirect(w, r, "/dashboard/", http.StatusFound)
-// 		return
-// 	}
-
-// 	// Получаем ТОЛЬКО группы текущего куратора (по ФИО из БД)
-// 	var curatorGroups []models.Groupfromcur
-// 	db.Where("name = ?", curator.Name).Find(&curatorGroups)
-
-// 	data := struct {
-// 		Curator models.User
-// 		Groups  []models.Groupfromcur
-// 	}{
-// 		Curator: curator,
-// 		Groups:  curatorGroups,
-// 	}
-
-// 	templates.ExecuteTemplate(w, "curator_dashboard.html", data)
-// }
-
-// // func CuratorFunction(w http.ResponseWriter, r *http.Request) {
-
-// // 	if r.Method == http.MethodPost {
-// // 		name := r.FormValue("full_name")
-// // 		group := r.FormValue("group")
-
-// // 		curatorGroup := &models.Groupfromcur{
-// // 			Name:  name,
-// // 			Group: group,
-// // 		}
-// // 		services.Add(curatorGroup)
-// // 		http.Redirect(w, r, "/dashboard/", http.StatusFound)
-// // 		return
-// // 	}
-
-// // 	claims, err := utils.GetUserFromCookie(r)
-// // 	if err != nil {
-// // 		http.Redirect(w, r, "/login", http.StatusFound)
-// // 		return
-// // 	}
-
-// // 	// Получаем пользователя чтобы узнать его ФИО
-// // 	var user models.User
-// // 	db := services.GetDB()
-// // 	db.Where("email = ?", claims.Email).First(&user)
-// // 	var myGroups []models.Groupfromcur
-// // 	db.Where("name = ?", user.Name).Find(&myGroups)
-
-// // 	templates.ExecuteTemplate(w, "curator_dashboard.html", myGroups)
-// // }
-
-// func AdminFunction(w http.ResponseWriter, r *http.Request) {
-// 	if r.Method == http.MethodPost {
-// 		name := r.FormValue("full_name")
-// 		number := r.FormValue("email")
-// 		group := r.FormValue("group")
-// 		telegramm := r.FormValue("telegramm")
-// 		password := r.FormValue("password")
-// 		email := r.FormValue("email")
-// 		role := "curator"
-// 		// делаем шаблон пользователя
-// 		user := &models.User{
-// 			Name:     name,
-// 			Phone:    number,
-// 			Group:    group,
-// 			Telegram: telegramm,
-// 			Email:    email,
-// 			Password: password,
-// 			Role:     role,
-// 		}
-// 		// добавляем пользователя в БД
-// 		services.Add(user)
-// 		http.Redirect(w, r, "/dashboard/", http.StatusFound)
-// 	}
-
-// 	templates.ExecuteTemplate(w, "admin_dashboard.html", nil)
-// }
-
-// // Пример использования дополнительных функций
-// func Profile(w http.ResponseWriter, r *http.Request) {
-// 	// Получаем отдельно роль
-// 	role, err := utils.GetUserRoleFromCookie(r)
-// 	if err != nil {
-// 		http.Redirect(w, r, "/login", http.StatusFound)
-// 		return
-// 	}
-
-// 	// Получаем ID пользователя
-// 	userID, err := utils.GetUserIDFromCookie(r)
-// 	if err != nil {
-// 		http.Redirect(w, r, "/login", http.StatusFound)
-// 		return
-// 	}
-
-// 	// Получаем email
-// 	email, err := utils.GetUserEmailFromCookie(r)
-// 	if err != nil {
-// 		http.Redirect(w, r, "/login", http.StatusFound)
-// 		return
-// 	}
-
-// 	data := struct {
-// 		Role  string
-// 		ID    uint
-// 		Email string
-// 	}{
-// 		Role:  role,
-// 		ID:    userID,
-// 		Email: email,
-// 	}
-
-// 	templates.ExecuteTemplate(w, "profile.html", data)
-// }

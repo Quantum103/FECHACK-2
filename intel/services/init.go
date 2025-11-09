@@ -26,7 +26,7 @@ func InitDB() error {
 		}
 
 		// Автомиграция
-		err = db.AutoMigrate(&models.User{}, &models.Attendance{}, &models.Groupfromcur{}, &models.ChatMessage{})
+		err = db.AutoMigrate(&models.User{}, &models.Attendance{}, &models.Groupfromcur{}, &models.ChatMessage{}, &models.Topic{})
 		if err != nil {
 			log.Fatal("Ошибка миграции:", err)
 			return
@@ -50,5 +50,8 @@ func createDefaultAdmin() {
 }
 
 func GetDB() *gorm.DB {
+	if db == nil {
+		log.Panic("Database not initialized! Call InitDB() first")
+	}
 	return db
 }

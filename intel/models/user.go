@@ -26,7 +26,7 @@ type User struct {
 	Password string `gorm:"password" json:"-"`
 	Role     string `gorm:"size:20;default:student" json:"role"` // admin, curator, headman, student
 	Group    string `gorm:"size:20" json:"group"`
-	topic    string `gorm:"size:100" json:"group"`
+	Topic    string `gorm:"size:100" json:"group"`
 }
 
 type Attendance struct {
