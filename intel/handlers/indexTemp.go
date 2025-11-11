@@ -21,15 +21,18 @@ func Dashboard(w http.ResponseWriter, r *http.Request) {
 	switch claims.Role {
 	case "admin":
 		AdminFunction(w, r)
-	case "curator":
-		// CuratorFunction(w, r)
 	case "student":
-		// StudentFunction(w, r)
+		StudentFunction(w, r)
 	case "headman":
-		// HeadmanFunction(w, r)
+		StudentsForStarosta(w, r)
 	default:
 		http.Redirect(w, r, "/login", http.StatusFound)
 	}
+}
+
+func StudentFunction(w http.ResponseWriter, r *http.Request) {
+	templates.ExecuteTemplate(w, "student.html", nil)
+
 }
 
 func AdminFunction(w http.ResponseWriter, r *http.Request) {
@@ -48,14 +51,15 @@ func AdminFunction(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Проверяем авторизацию
-	_, err := utils.GetUserFromCookie(r)
+	claims, err := utils.GetUserFromCookie(r)
 	if err != nil {
 		log.Printf("Auth error: %v", err)
 		http.Redirect(w, r, "/login", http.StatusFound)
 		return
 	}
-
+	if claims.Role != "admin" {
+		http.Redirect(w, r, "/studentsStar", http.StatusSeeOther)
+	}
 	if r.Method == http.MethodPost {
 		log.Printf("Starting file upload processing")
 
@@ -96,14 +100,14 @@ func AdminFunction(w http.ResponseWriter, r *http.Request) {
 }
 
 func ListStudents(w http.ResponseWriter, r *http.Request) {
-	// Проверяем авторизацию
-	_, err := utils.GetUserFromCookie(r)
+	claims, err := utils.GetUserFromCookie(r)
 	if err != nil {
 		http.Redirect(w, r, "/login", http.StatusFound)
 		return
 	}
-
-	// Получаем реальные данные из базы
+	if claims.Role != "admin" {
+		http.Redirect(w, r, "/studentsStar", http.StatusSeeOther)
+	}
 	data, err := GetAllTopicsData()
 	if err != nil {
 		log.Printf("Ошибка получения данных: %v", err)
@@ -111,10 +115,8 @@ func ListStudents(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Добавляем заголовок для страницы
 	data["Title"] = "Управление студентами и темами"
 
-	// Выполн+яем шаблон
 	err = templates.ExecuteTemplate(w, "listStudents.html", data)
 	if err != nil {
 		log.Printf("Ошибка выполнения шаблона: %v", err)
@@ -150,7 +152,7 @@ func ruc(w http.ResponseWriter, r *http.Request) {
 		fmt.Printf("Найден студент: %s, текущая роль: %s\n", student.Name, student.Role)
 
 		// Меняем роль на headman и назначаем группу
-		student.Role = "curator"
+		student.Role = "headman"
 
 		result = db.Save(&student)
 		if result.Error != nil {
@@ -160,20 +162,93 @@ func ruc(w http.ResponseWriter, r *http.Request) {
 		}
 
 		fmt.Printf("Роль успешно изменена на: %s\n", student.Role)
-		http.Redirect(w, r, "/dashboard/", http.StatusFound)
+		http.Redirect(w, r, "/studentsStar/", http.StatusFound)
 		return
 	}
 
 	templates.ExecuteTemplate(w, "rucCreate.html", nil)
 }
-
-func starosta(w http.ResponseWriter, r *http.Request) {
+func addStatosta(w http.ResponseWriter, r *http.Request) {
 	_, err := utils.GetUserFromCookie(r)
 	if err != nil {
 		http.Redirect(w, r, "/login", http.StatusFound)
 		return
 	}
 
-	templates.ExecuteTemplate(w, "starosta.html", nil)
+	if r.Method == http.MethodPost {
+		// Парсим форму
+		if err := r.ParseForm(); err != nil {
+			http.Error(w, "Ошибка парсинга формы", http.StatusBadRequest)
+			return
+		}
 
+		studentEmail := r.FormValue("student_email")
+		headmanGroup := r.FormValue("headman_group")
+
+		fmt.Printf("Получены данные: email=%s, group=%s\n", studentEmail, headmanGroup)
+
+		db := services.GetDB()
+
+		// Находим студента по email
+		var student models.User
+		result := db.Where("email = ?", studentEmail).First(&student)
+
+		if result.Error != nil {
+			fmt.Printf("Ошибка поиска студента: %v\n", result.Error)
+			http.Error(w, "Студент не найден", http.StatusBadRequest)
+			return
+		}
+
+		fmt.Printf("Найден студент: %s, текущая роль: %s, группа: %s\n",
+			student.Name, student.Role, student.Group)
+
+		// Меняем роль на headman и назначаем HeadmanGroup
+		student.Role = "headman"
+		student.HeadmanGroup = headmanGroup
+
+		result = db.Save(&student)
+		if result.Error != nil {
+			fmt.Printf("Ошибка сохранения: %v\n", result.Error)
+			http.Error(w, "Ошибка сохранения", http.StatusInternalServerError)
+			return
+		}
+
+		fmt.Printf("Студент назначен старостой! Роль: %s, Ответственная группа: %s\n",
+			student.Role, student.HeadmanGroup)
+
+		http.Redirect(w, r, "/", http.StatusFound)
+		return
+	}
+	templates.ExecuteTemplate(w, "starostaCreate.html", nil)
+}
+
+func StudentsForStarosta(w http.ResponseWriter, r *http.Request) {
+	_, err := utils.GetUserFromCookie(r)
+	if err != nil {
+		http.Redirect(w, r, "/login", http.StatusFound)
+		return
+	}
+
+	// Получаем реальные данные из базы
+	data, err := GetAllTopicsData()
+	if err != nil {
+		log.Printf("Ошибка получения данных: %v", err)
+		http.Error(w, "Ошибка загрузки данных: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Добавляем заголовок для страницы
+	data["Title"] = "Управление студентами и темами"
+
+	// Выполн+яем шаблон
+	err = templates.ExecuteTemplate(w, "listStudentforStarosta.html", data)
+	if err != nil {
+		log.Printf("Ошибка выполнения шаблона: %v", err)
+		http.Error(w, "Ошибка отображения страницы", http.StatusInternalServerError)
+		return
+	}
+}
+
+func exportList(w http.ResponseWriter, r *http.Request) {
+	templates.ExecuteTemplate(w, "listexport.html", nil)
 }

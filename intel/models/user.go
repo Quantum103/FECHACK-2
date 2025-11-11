@@ -21,22 +21,14 @@ type Topic struct {
 
 type User struct {
 	gorm.Model
-	Name     string `gorm:"size:50" json:"full_name"`
-	Email    string `gorm:"uniqueIndex" json:"email"`
-	Password string `gorm:"password" json:"-"`
-	Role     string `gorm:"size:20;default:student" json:"role"` // admin, curator, headman, student
-	Group    string `gorm:"size:20" json:"group"`
-	Topic    string `gorm:"size:100" json:"group"`
-}
+	Name         string `gorm:"size:50" json:"full_name"`
+	Email        string `gorm:"uniqueIndex" json:"email"`
+	Password     string `gorm:"password" json:"-"`
+	Role         string `gorm:"size:20;default:student" json:"role"` // admin, curator, headman, student
+	Group        string `gorm:"size:20" json:"group"`
+	Topic        string `gorm:"size:100" json:"topic"`
+	HeadmanGroup string `gorm:"size:20" json:"headman_group"` // Группа, за которую отвечает староста
 
-type Attendance struct {
-	ID          uint      `gorm:"primaryKey"`
-	UserID      uint      `gorm:"not null"`
-	Date        time.Time `gorm:"type:date"`
-	HoursMissed int       `gorm:"default:0"`
-	Reason      string    `gorm:"size:255"`
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
 }
 
 type Groupfromcur struct {

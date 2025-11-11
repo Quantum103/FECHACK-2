@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Выгрузка по руководителю</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        .container { max-width: 500px; margin: 0 auto; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; }
+        button { background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        .nav { margin-bottom: 30px; }
+        .nav a { margin-right: 15px; color: #007bff; text-decoration: none; }
+        .nav a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="nav">
+            <a href="/dashboard/">Главная</a>
+            <a href="/export-form">Выгрузка по группе</a>
+            <a href="/export-supervisor-form">Выгрузка по руководителю</a>
+        </div>
+        
+        <h2>Выгрузка данных по руководителю</h2>
+        <form method="POST" action="/export-supervisor">
+            <div class="form-group">
+                <label for="supervisor">ФИО руководителя:</label>
+                <input type="text" id="supervisor" name="supervisor" required 
+                       placeholder="Введите полное ФИО руководителя">
+            </div>
+            <button type="submit">Скачать Excel с темами</button>
+        </form>
+    </div>
+</body>
+</html>

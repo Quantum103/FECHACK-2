@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Выгрузка данных по группе</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #D5C3A1;
+            --secondary-color: #A58F6F;
+            --accent-color: #8A7252;
+            --dark-color: #5D4A2E;
+            --light-color: #F5F1E8;
+            --card-shadow: 0 10px 30px rgba(90, 74, 46, 0.1);
+            --hover-shadow: 0 15px 40px rgba(90, 74, 46, 0.15);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #D5C3A1 0%, #A58F6F 100%);
+            color: var(--dark-color);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        /* Анимированный фон */
+        .background-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+        }
+        
+        .floating-shape {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(90, 74, 46, 0.05);
+            animation: float 15s infinite ease-in-out;
+        }
+        
+        .shape-1 {
+            width: 80px;
+            height: 80px;
+            top: 10%;
+            left: 10%;
+            animation-delay: 0s;
+        }
+        
+        .shape-2 {
+            width: 120px;
+            height: 120px;
+            top: 70%;
+            left: 85%;
+            animation-delay: 3s;
+        }
+        
+        .shape-3 {
+            width: 60px;
+            height: 60px;
+            top: 40%;
+            left: 75%;
+            animation-delay: 6s;
+        }
+        
+        .shape-4 {
+            width: 100px;
+            height: 100px;
+            top: 80%;
+            left: 15%;
+            animation-delay: 9s;
+        }
+        
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0) translateX(0);
+            }
+            25% {
+                transform: translateY(-20px) translateX(10px);
+            }
+            50% {
+                transform: translateY(-10px) translateX(-10px);
+            }
+            75% {
+                transform: translateY(20px) translateX(5px);
+            }
+        }
+        
+        /* Контейнер формы */
+        .form-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: var(--card-shadow);
+            width: 100%;
+            max-width: 500px;
+            overflow: hidden;
+            position: relative;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(213, 195, 161, 0.3);
+        }
+        
+        .form-container:hover {
+            box-shadow: var(--hover-shadow);
+            transform: translateY(-5px);
+        }
+        
+        /* Заголовок формы */
+        .form-header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: var(--dark-color);
+            padding: 30px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .form-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%);
+        }
+        
+        .form-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+            display: block;
+        }
+        
+        .form-title {
+            font-size: 28px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        
+        .form-subtitle {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+        
+        /* Тело формы */
+        .form-body {
+            padding: 40px;
+        }
+        
+        .form-group {
+            margin-bottom: 25px;
+            position: relative;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: var(--dark-color);
+            font-size: 16px;
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 15px 20px;
+            border: 2px solid rgba(213, 195, 161, 0.5);
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s;
+            background: var(--light-color);
+            color: var(--dark-color);
+        }
+        
+        .form-input:focus {
+            border-color: var(--accent-color);
+            background: white;
+            box-shadow: 0 0 0 4px rgba(138, 114, 82, 0.1);
+            outline: none;
+        }
+        
+        .form-input::placeholder {
+            color: #a0a4b8;
+        }
+        
+        .input-icon {
+            position: absolute;
+            right: 20px;
+            top: 45px;
+            color: var(--accent-color);
+            font-size: 18px;
+        }
+        
+        /* Кнопка отправки */
+        .submit-btn {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: var(--dark-color);
+            border: none;
+            border-radius: 10px;
+            padding: 16px 30px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(165, 143, 111, 0.3);
+        }
+        
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(165, 143, 111, 0.4);
+        }
+        
+        .submit-btn:active {
+            transform: translateY(0);
+        }
+        
+        .btn-icon {
+            margin-right: 10px;
+            font-size: 20px;
+        }
+        
+        /* Дополнительная информация */
+        .form-footer {
+            text-align: center;
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(213, 195, 161, 0.5);
+            color: var(--dark-color);
+            font-size: 14px;
+        }
+        
+        .info-box {
+            background: rgba(213, 195, 161, 0.2);
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 20px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .info-icon {
+            color: var(--accent-color);
+            font-size: 20px;
+            margin-right: 10px;
+        }
+        
+        /* Адаптивность */
+        @media (max-width: 576px) {
+            .form-body {
+                padding: 30px 20px;
+            }
+            
+            .form-header {
+                padding: 25px 20px;
+            }
+            
+            .form-title {
+                font-size: 24px;
+            }
+        }
+        
+        /* Анимация появления */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .form-container {
+            animation: fadeIn 0.6s ease-out;
+        }
+    </style>
+</head>
+<body>
+    <!-- Анимированный фон -->
+    <div class="background-animation">
+        <div class="floating-shape shape-1"></div>
+        <div class="floating-shape shape-2"></div>
+        <div class="floating-shape shape-3"></div>
+        <div class="floating-shape shape-4"></div>
+    </div>
+
+    <!-- Контейнер формы -->
+    <div class="form-container">
+        <div class="form-header">
+            <i class="fas fa-file-export form-icon"></i>
+            <h1 class="form-title">Выгрузка данных студентов</h1>
+            <p class="form-subtitle">Получите полную информацию о студентах выбранной группы</p>
+        </div>
+        
+        <div class="form-body">
+            <form method="POST" action="/export">
+                <div class="form-group">
+                    <label for="group" class="form-label">Введите группу:</label>
+                    <input type="text" id="group" name="group" class="form-input" required placeholder="Например: GROUP-123">
+                    <i class="fas fa-users input-icon"></i>
+                </div>
+                
+                <button type="submit" class="submit-btn">
+                    <i class="fas fa-download btn-icon"></i> Скачать Excel
+                </button>
+                
+                <div class="form-footer">
+                    <div class="info-box">
+                        <i class="fas fa-info-circle info-icon"></i>
+                        <div>После ввода номера группы будет создан Excel-файл с полной информацией о студентах</div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Добавим интерактивности для улучшения пользовательского опыта
+        document.addEventListener('DOMContentLoaded', function() {
+            const formInput = document.getElementById('group');
+            const submitBtn = document.querySelector('.submit-btn');
+            
+            // Анимация при фокусе на поле ввода
+            formInput.addEventListener('focus', function() {
+                this.parentElement.classList.add('focused');
+            });
+            
+            formInput.addEventListener('blur', function() {
+                if (this.value === '') {
+                    this.parentElement.classList.remove('focused');
+                }
+            });
+            
+            // Индикатор загрузки при отправке формы
+            const form = document.querySelector('form');
+            form.addEventListener('submit', function(e) {
+                if (formInput.value.trim() !== '') {
+                    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin btn-icon"></i> Формирование отчета...';
+                    submitBtn.disabled = true;
+                    
+                    // В реальном приложении здесь был бы AJAX запрос
+                    // Для демонстрации сбросим состояние через 3 секунды
+                    setTimeout(function() {
+                        submitBtn.innerHTML = '<i class="fas fa-download btn-icon"></i> Скачать Excel';
+                        submitBtn.disabled = false;
+                    }, 3000);
+                }
+            });
+        });
+    </script>
+</body>
+</html>

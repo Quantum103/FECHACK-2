@@ -1,10 +1,10 @@
 package handlers
 
 import (
-	"bytes"
 	"encoding/json"
-	"io"
-	"mime/multipart"
+	"fmt"
+	"log"
+	"math/rand"
 	"net/http"
 	"proj/intel/models"
 	"proj/intel/services"
@@ -15,79 +15,6 @@ import (
 )
 
 var db *gorm.DB
-
-func UploadHandler(w http.ResponseWriter, r *http.Request) {
-	// 1. Проверяем метод
-	if r.Method != "POST" {
-		http.Error(w, "Только POST запросы", http.StatusMethodNotAllowed)
-		return
-	}
-
-	// 2. Получаем файл из формы
-	file, header, err := r.FormFile("file")
-	if err != nil {
-		http.Error(w, "Файл не найден", http.StatusBadRequest)
-		return
-	}
-	defer file.Close()
-
-	// 3. Читаем файл в память
-	fileData, err := io.ReadAll(file)
-	if err != nil {
-		http.Error(w, "Ошибка чтения файла", http.StatusInternalServerError)
-		return
-	}
-
-	// 4. Отправляем в Python для обработки
-	result, err := sendToPython(fileData, header.Filename)
-	if err != nil {
-		http.Error(w, "Ошибка обработки: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	// 5. Возвращаем результат
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(result)
-}
-
-func sendToPython(fileData []byte, filename string) (map[string]interface{}, error) {
-	// Создаем multipart форму
-	var body bytes.Buffer
-	writer := multipart.NewWriter(&body)
-
-	// Добавляем файл
-	part, err := writer.CreateFormFile("file", filename)
-	if err != nil {
-		return nil, err
-	}
-	part.Write(fileData)
-	writer.Close()
-
-	// Отправляем в Python
-	req, err := http.NewRequest("POST", "http://localhost:8000/process", &body)
-	if err != nil {
-		return nil, err
-	}
-	req.Header.Set("Content-Type", writer.FormDataContentType())
-
-	client := &http.Client{Timeout: 30 * time.Second}
-	resp, err := client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	// Читаем ответ
-	respBody, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	var result map[string]interface{}
-	json.Unmarshal(respBody, &result)
-
-	return result, nil
-}
 
 type StudentWithTopic struct {
 	User  models.User  `json:"user"`
@@ -233,3 +160,165 @@ func AssignStudentToTopic(w http.ResponseWriter, r *http.Request) {
 	// Теперь вызываем обработчик с правильными данными
 	AssignTopicToStudent(w, r)
 }
+
+// Функция для рандомного распределения тем
+
+func AutoAssignTopics(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "POST" {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	db := services.GetDB()
+
+	// Получаем студентов без тем
+	var studentsWithoutTopics []models.User
+	err := db.Where("role = ? AND (topic = '' OR topic IS NULL)", "student").Find(&studentsWithoutTopics).Error
+	if err != nil {
+		http.Error(w, "Ошибка получения студентов: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Получаем свободные темы
+	var freeTopics []models.Topic
+	err = db.Where("status = 'free' OR student_id IS NULL OR student_id = 0").Find(&freeTopics).Error
+	if err != nil {
+		http.Error(w, "Ошибка получения тем: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Проверяем, что есть что распределять
+	if len(studentsWithoutTopics) == 0 {
+		http.Error(w, "Нет студентов без тем", http.StatusBadRequest)
+		return
+	}
+
+	if len(freeTopics) == 0 {
+		http.Error(w, "Нет свободных тем", http.StatusBadRequest)
+		return
+	}
+
+	// Перемешиваем студентов и темы для случайного распределения
+	shuffledStudents := shuffleStudents(studentsWithoutTopics)
+	shuffledTopics := shuffleTopics(freeTopics)
+
+	// Распределяем темы (берем минимум из количества студентов и тем)
+	count := min(len(shuffledStudents), len(shuffledTopics))
+	assignedCount := 0
+
+	for i := 0; i < count; i++ {
+		student := shuffledStudents[i]
+		topic := shuffledTopics[i]
+
+		// Назначаем тему студенту
+		err := db.Model(&models.Topic{}).
+			Where("id = ?", topic.ID).
+			Updates(map[string]interface{}{
+				"student_id": student.ID,
+				"status":     "assigned",
+			}).Error
+
+		if err != nil {
+			log.Printf("Ошибка назначения темы %d студенту %d: %v", topic.ID, student.ID, err)
+			continue
+		}
+
+		// Обновляем тему у студента
+		err = db.Model(&models.User{}).
+			Where("id = ?", student.ID).
+			Update("topic", topic.Title).Error
+
+		if err != nil {
+			log.Printf("Ошибка обновления студента %d: %v", student.ID, err)
+			continue
+		}
+
+		assignedCount++
+	}
+
+	// Возвращаем результат
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"success":        true,
+		"message":        fmt.Sprintf("Успешно распределено %d тем из %d возможных", assignedCount, count),
+		"assigned":       assignedCount,
+		"total_possible": count,
+	})
+}
+
+// Функции для перемешивания
+func shuffleStudents(students []models.User) []models.User {
+	rand.Seed(time.Now().UnixNano())
+	shuffled := make([]models.User, len(students))
+	copy(shuffled, students)
+	rand.Shuffle(len(shuffled), func(i, j int) {
+		shuffled[i], shuffled[j] = shuffled[j], shuffled[i]
+	})
+	return shuffled
+}
+
+func shuffleTopics(topics []models.Topic) []models.Topic {
+	rand.Seed(time.Now().UnixNano())
+	shuffled := make([]models.Topic, len(topics))
+	copy(shuffled, topics)
+	rand.Shuffle(len(shuffled), func(i, j int) {
+		shuffled[i], shuffled[j] = shuffled[j], shuffled[i]
+	})
+	return shuffled
+}
+
+func min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
+}
+
+// удаляет назначенные темы
+func RemoveAssignment(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "POST" {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	studentID := r.FormValue("student_id")
+	topicID := r.FormValue("topic_id")
+
+	if studentID == "" || topicID == "" {
+		http.Error(w, "Missing parameters", http.StatusBadRequest)
+		return
+	}
+
+	db := services.GetDB()
+
+	// Освобождаем тему
+	err := db.Model(&models.Topic{}).
+		Where("id = ?", topicID).
+		Updates(map[string]interface{}{
+			"student_id": nil,
+			"status":     "free",
+		}).Error
+
+	if err != nil {
+		http.Error(w, "Ошибка освобождения темы", http.StatusInternalServerError)
+		return
+	}
+
+	// Очищаем тему у студента
+	err = db.Model(&models.User{}).
+		Where("id = ?", studentID).
+		Update("topic", "").Error
+
+	if err != nil {
+		http.Error(w, "Ошибка обновления студента", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"success": true,
+		"message": "Назначение удалено",
+	})
+}
+
+// Переназначение темы

@@ -2,6 +2,7 @@
 package handlers
 
 import (
+	"fmt"
 	"html/template"
 	"net/http"
 	"os"
@@ -67,7 +68,7 @@ func register(w http.ResponseWriter, r *http.Request) {
 func login(w http.ResponseWriter, r *http.Request) {
 	var db = services.GetDB()
 	if r.Method == http.MethodPost {
-
+		fmt.Println("зашли")
 		email := r.FormValue("email")
 		password := r.FormValue("password")
 

@@ -26,7 +26,7 @@ func InitDB() error {
 		}
 
 		// Автомиграция
-		err = db.AutoMigrate(&models.User{}, &models.Attendance{}, &models.Groupfromcur{}, &models.ChatMessage{}, &models.Topic{})
+		err = db.AutoMigrate(&models.User{}, &models.Groupfromcur{}, &models.Topic{})
 		if err != nil {
 			log.Fatal("Ошибка миграции:", err)
 			return
