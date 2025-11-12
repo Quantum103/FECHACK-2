@@ -9,6 +9,7 @@ import (
 	"proj/intel/models"
 	"proj/intel/services"
 	"proj/utils"
+	"strings"
 )
 
 func Dashboard(w http.ResponseWriter, r *http.Request) {
@@ -31,8 +32,49 @@ func Dashboard(w http.ResponseWriter, r *http.Request) {
 }
 
 func StudentFunction(w http.ResponseWriter, r *http.Request) {
-	templates.ExecuteTemplate(w, "student.html", nil)
+	// Получаем пользователя из куки
+	claims, err := utils.GetUserFromCookie(r)
+	if err != nil {
+		http.Error(w, "Не авторизован", http.StatusUnauthorized)
+		return
+	}
 
+	// Получаем данные студента из БД
+	var student models.User
+	if err := services.GetDB().First(&student, claims.UserID).Error; err != nil {
+		http.Error(w, "Студент не найден", http.StatusNotFound)
+		return
+	}
+
+	// Генерируем инициалы для аватара
+	initials := generateInitials(student.Name)
+
+	// Подготавливаем данные для шаблона
+	data := struct {
+		User     models.User
+		HasTopic bool
+		Topic    string
+		Initials string
+	}{
+		User:     student,
+		HasTopic: student.Topic != "",
+		Topic:    student.Topic,
+		Initials: initials,
+	}
+
+	// Выполняем шаблон
+	templates.ExecuteTemplate(w, "student.html", data)
+}
+
+// Функция для генерации инициалов из имени
+func generateInitials(name string) string {
+	words := strings.Fields(name)
+	if len(words) >= 2 {
+		return string(words[0][0]) + string(words[1][0])
+	} else if len(words) == 1 {
+		return string(words[0][0])
+	}
+	return "??"
 }
 
 func AdminFunction(w http.ResponseWriter, r *http.Request) {
